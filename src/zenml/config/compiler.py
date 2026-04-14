@@ -24,6 +24,7 @@ from typing import (
     Mapping,
     Optional,
     Tuple,
+    Union,
 )
 
 from zenml import __version__
@@ -467,24 +468,20 @@ class Compiler:
         Returns:
             The step spec.
         """
-        inputs = {
-            key: [
-                InputSpec(
-                    step_name=artifact.invocation_id,
-                    output_name=artifact.output_name,
-                    chunk_index=artifact.chunk_index,
-                    chunk_size=artifact.chunk_size,
-                )
-                for artifact in artifact_list
-            ]
-            for key, artifact_list in invocation.input_artifacts.items()
-        }
+        inputs: Dict[str, Union[List[InputSpec], InputSpec]] = {}
+        for key, artifact_or_list in invocation.input_artifacts.items():
+            if isinstance(artifact_or_list, list):
+                inputs[key] = [a.to_spec() for a in artifact_or_list]
+            else:
+                inputs[key] = artifact_or_list.to_spec()
+
         return StepSpec(
             source=invocation.step.resolve(),
             upstream_steps=sorted(invocation.upstream_steps),
             inputs=inputs,
             invocation_id=invocation.id,
             enable_heartbeat=enable_heartbeat,
+            parameter_spec=invocation.step._compute_parameter_schema(),
         )
 
     @staticmethod

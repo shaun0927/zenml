@@ -404,6 +404,9 @@ class StepLauncher:
                             artifacts=step_run.outputs,
                             model_version=model_version,
                         )
+                elif step_run.status == ExecutionStatus.FAILED:
+                    # No need to link anything for a failed step run.
+                    pass
                 else:
                     raise RuntimeError(
                         f"Unexpected step run status `{step_run.status}` for "
@@ -454,8 +457,7 @@ class StepLauncher:
             pipeline_run: The model of the current pipeline run.
             step_run: The model of the current step run.
             force_write_logs: The context for the step logs.
-
-        """
+        """  # noqa: DOC501
         from zenml.deployers.server import runtime
 
         step_run_info = StepRunInfo(
@@ -552,8 +554,8 @@ class StepLauncher:
                 running asynchronously in a dynamic pipeline.
             NotImplementedError: If the step operator does not implement the
                 `submit(...)` or `launch(...)` methods.
-            RuntimeError: If the step run failed.
-        """
+            BaseException: If the step run failed.
+        """  # noqa: DOC502, DOC503
         step_operator = _get_step_operator(
             stack=self._stack,
             step_operator_name=step_operator_name,
@@ -635,7 +637,14 @@ class StepLauncher:
                     step_run=step_run_info.step_run,
                 )
                 if not status.is_successful:
-                    raise RuntimeError(f"Step failed with status `{status}`.")
+                    step_run = Client().get_run_step(step_run_info.step_run_id)
+                    raise exception_utils.reconstruct_exception(
+                        exception_info=step_run.exception_info,
+                        fallback_message=(
+                            f"Step `{step_run_info.pipeline_step_name}` failed "
+                            f"with status `{status}`."
+                        ),
+                    )
 
     def _run_step_with_dynamic_orchestrator(
         self,
@@ -647,8 +656,8 @@ class StepLauncher:
             step_run_info: Additional information needed to run the step.
 
         Raises:
-            RuntimeError: If the step run failed.
-        """
+            BaseException: If the step run failed.
+        """  # noqa: DOC502, DOC503
         # If we don't pass the run ID here, does it reuse the existing token?
         environment, secrets = orchestrator_utils.get_config_environment_vars(
             pipeline_run_id=step_run_info.run_id,
@@ -670,7 +679,14 @@ class StepLauncher:
                 step_run_info.step_run
             )
             if not status.is_successful:
-                raise RuntimeError(f"Step failed with status `{status}`.")
+                step_run = Client().get_run_step(step_run_info.step_run_id)
+                raise exception_utils.reconstruct_exception(
+                    exception_info=step_run.exception_info,
+                    fallback_message=(
+                        f"Step `{step_run_info.pipeline_step_name}` failed "
+                        f"with status `{status}`."
+                    ),
+                )
 
     def _run_step_in_current_thread(
         self,

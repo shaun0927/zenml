@@ -20,6 +20,7 @@ from uuid import UUID
 
 from zenml.logger import get_logger
 from zenml.models import ArtifactVersionResponse, StepRunResponse
+from zenml.utils import exception_utils
 
 logger = get_logger(__name__)
 
@@ -111,7 +112,7 @@ class _InlineStepFuture(BaseFuture):
         Returns:
             True if the step run future is running, False otherwise.
         """
-        return self._wrapped.running()
+        return not self._wrapped.done()
 
     def result(self) -> "StepRunResponse":
         """Get the result of the step run future.
@@ -150,7 +151,7 @@ class _IsolatedStepFuture(BaseFuture):
         """
         from zenml.execution.pipeline.dynamic.utils import get_latest_step_run
 
-        if self._wrapped and self._wrapped.running():
+        if self._wrapped and not self._wrapped.done():
             return True
 
         step_run = get_latest_step_run(
@@ -163,11 +164,12 @@ class _IsolatedStepFuture(BaseFuture):
         """Get the result of the step future.
 
         Raises:
-            RuntimeError: If the step failed.
+            BaseException: Any exception that happened while waiting for the
+                step to finish.
 
         Returns:
             The result of the step future.
-        """
+        """  # noqa: DOC503
         from zenml.execution.pipeline.dynamic.utils import (
             wait_for_step_to_finish,
         )
@@ -182,7 +184,13 @@ class _IsolatedStepFuture(BaseFuture):
         )
 
         if step_run.status.is_failed:
-            raise RuntimeError(f"Step `{self.invocation_id}` failed.")
+            raise exception_utils.reconstruct_exception(
+                exception_info=step_run.exception_info,
+                fallback_message=(
+                    f"Step `{self.invocation_id}` failed with "
+                    f"status `{step_run.status}`."
+                ),
+            )
 
         return step_run
 
@@ -427,7 +435,7 @@ class StepFuture(BaseStepFuture):
 
         Yields:
             The artifact futures.
-        """
+        """  # noqa: DOC201, DOC403
         if not self._output_keys:
             raise ValueError(
                 f"Step {self.invocation_id} does not return any outputs."
@@ -545,7 +553,7 @@ class MapResultsFuture(BaseFuture):
 
         Yields:
             The step run futures.
-        """
+        """  # noqa: DOC403
         yield from self.futures
 
     def __len__(self) -> int:

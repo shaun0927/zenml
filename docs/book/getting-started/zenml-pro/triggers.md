@@ -5,6 +5,10 @@ icon: server
 
 # Triggers
 
+{% hint style="info" %}
+Triggers are part of ZenML's paid features. For details on availability and supported plans, visit the [pricing page](https://www.zenml.io/pricing)
+{% endhint %}
+
 In the [snapshots](./snapshots.md) section, you learned how to prepare snapshots and execute them on demand via 
 the dashboard, CLI, or SDK. In many cases, however, pipelines need to run automatically - either on a schedule or in 
 response to an event.
@@ -75,6 +79,31 @@ Via the CLI:
 
 ~~~bash
 zenml trigger schedule attach "<TRIGGER_ID>" "<SNAPSHOT_ID>"
+~~~
+
+Users can provide a configuration object to define the parameters of pipeline runs triggered from this attachment.
+
+Via the SDK:
+
+~~~python
+from zenml.client import Client
+from zenml.config.pipeline_run_configuration import PipelineRunConfiguration
+
+client = Client()
+client.attach_trigger_to_snapshot(
+    trigger_id="<TRIGGER_ID>",
+    pipeline_snapshot_id="<>SNAPSHOT_ID",
+    run_configuration=PipelineRunConfiguration(
+        enable_step_logs=True,
+        enable_pipeline_logs=True,
+    )
+)
+~~~
+
+Via the CLI:
+
+~~~bash
+zenml trigger schedule detach "<TRIGGER_ID>" "<SNAPSHOT_ID>" --config=<path-to-your-config>.yml
 ~~~
 
 Triggers can be *detached* from snapshots as well.
@@ -228,3 +257,5 @@ better suited for production workloads:
 * Visibility
   * Triggers: Extended dashboard visibility and management.
   * OS Schedules: Limited dashboard exposure.
+
+<figure><img src="https://static.scarf.sh/a.png?x-pxid=f0b4f458-0a54-4fcd-aa95-d5ee424815bc" alt="ZenML Scarf"><figcaption></figcaption></figure>

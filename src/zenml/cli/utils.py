@@ -1024,7 +1024,7 @@ def install_packages(
         use_uv: Whether to use uv for package installation.
 
     Raises:
-        e: If the package installation fails.
+        subprocess.CalledProcessError: If the package installation fails.
     """
     if "neptune" in packages:
         declare(
@@ -2043,13 +2043,15 @@ def get_execution_status_emoji(status: "ExecutionStatus") -> str:
 
     Returns:
         An emoji representing the given execution status.
-
-    Raises:
-        RuntimeError: If the given execution status is not supported.
     """
     from zenml.enums import ExecutionStatus
 
-    if status in {ExecutionStatus.INITIALIZING, ExecutionStatus.PROVISIONING}:
+    if status in {
+        ExecutionStatus.INITIALIZING,
+        ExecutionStatus.PROVISIONING,
+        ExecutionStatus.RESUMING,
+        ExecutionStatus.RETRYING,
+    }:
         return ":hourglass_flowing_sand:"
     if status == ExecutionStatus.FAILED:
         return ":x:"
@@ -2061,7 +2063,10 @@ def get_execution_status_emoji(status: "ExecutionStatus") -> str:
         return ":package:"
     if status == ExecutionStatus.STOPPED or status == ExecutionStatus.STOPPING:
         return ":stop_sign:"
-    raise RuntimeError(f"Unknown status: {status}")
+    if status == ExecutionStatus.PAUSED:
+        return ":pause_button:"
+
+    return ":question:"
 
 
 def fetch_snapshot(

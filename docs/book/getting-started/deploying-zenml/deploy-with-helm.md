@@ -291,7 +291,7 @@ ZenML also supports Kubernetes Gateway API through `HTTPRoute` resources. This i
 Use the following values pattern:
 
 ```yaml
-zenml:
+server:
   ingress:
     enabled: false
   gateway:
@@ -305,7 +305,7 @@ zenml:
     path: /
 ```
 
-> **Important:** `zenml.ingress.enabled` and `zenml.gateway.enabled` are mutually exclusive.
+> **Important:** `server.ingress.enabled` and `server.gateway.enabled` are mutually exclusive. The chart will fail to render if both are `true`.
 
 For a full migration flow (prerequisites, rollout strategy, TLS options, DNS cutover, and rollback), see [Migrate to Gateway API](migrate-to-gateway-api.md).
 
@@ -777,9 +777,9 @@ By default, the following hostnames/domains are excluded from proxying:
 - `localhost`, `127.0.0.1`, `::1` (IPv4 and IPv6 localhost)
 - `fe80::/10` (IPv6 link-local addresses)
 - `.svc` and `.svc.cluster.local` (Kubernetes service DNS domains)
-- The hostname from `zenml.serverURL` if configured
-- The ingress hostname (`zenml.ingress.host`) if configured
-- The gateway hostname (`zenml.gateway.host`) if configured
+- The hostname from `server.serverURL` if configured
+- The ingress hostname (`server.ingress.host`) if configured
+- The gateway hostname (`server.gateway.host`) if configured
 - Internal service names used for communication between components
 
 You can add additional exclusions using the `additionalNoProxy` list. The NO_PROXY environment variable accepts:

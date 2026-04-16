@@ -65,7 +65,6 @@ from typing import (
 )
 from uuid import UUID
 
-import structlog
 from packaging import version
 from pydantic import (
     ConfigDict,
@@ -174,7 +173,7 @@ from zenml.exceptions import (
     SecretsStoreNotConfiguredError,
 )
 from zenml.io import fileio
-from zenml.logger import get_console_handler, get_logging_level
+from zenml.logger import get_console_handler, get_logger, get_logging_level
 from zenml.metadata.metadata_types import get_metadata_type
 from zenml.models import (
     TRIGGER_RETURN_TYPE_UNION,
@@ -448,7 +447,7 @@ AnyIdentifiedResponse = TypeVar(
 SelectOfScalar.inherit_cache = True
 Select.inherit_cache = True
 
-logger = structlog.get_logger(__name__)
+logger = get_logger(__name__)
 
 ZENML_SQLITE_DB_FILENAME = "zenml.db"
 
